@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Professional self-custody encrypted seed storage. Argon2id, keyfile 2FA, multi-seed, QR, audit hash.">
+  <meta name="theme-color" content="#0b0b0b">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self';">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon-192.png" type="image/png">
+  <title>rozaVault v3</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container" id="appRoot">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="modal hidden">
+      <div class="modal-content" style="text-align: center;">
+        <p>Processing...</p>
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <div id="dashboard" class="screen active">
+      <header>
+        <div class="logo">roza<span class="accent">Vault</span> <span class="version">v3</span></div>
+        <button id="auditBtn" class="btn-icon" title="Audit integrity">Audit</button>
+      </header>
+      <div class="tabs">
+        <button class="tab active" data-tab="encrypt">Encrypt</button>
+        <button class="tab" data-tab="decrypt">Decrypt</button>
+        <button class="tab" data-tab="manage">Manage Seeds</button>
+      </div>
+
+      <!-- Panel Encrypt -->
+      <div class="panel active" id="panel-encrypt">
+        <div class="card">
+          <div class="field">
+            <label for="seedInput">Seed Phrase</label>
+            <textarea id="seedInput" placeholder="Enter your 12 or 24 word seed phrase" rows="4"></textarea>
+          </div>
+          <div class="field">
+            <label for="encPassword">Encryption Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="encPassword" placeholder="Minimum 8 characters">
+              <button type="button" class="toggle-vis" data-target="encPassword">Show</button>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <span class="strength-label" id="strengthLabel"></span>
+          </div>
+          <div class="field">
+            <label for="keyfileInput">Keyfile (optional 2FA)</label>
+            <input type="file" id="keyfileInput">
+          </div>
+          <div class="action-row">
+            <button id="encryptBtn" class="btn-primary" disabled>Generate Encrypted URL</button>
+            <button id="generatePassBtn" class="btn-secondary">Random Password</button>
+          </div>
+          <div class="action-row">
+            <button id="clearEncryptBtn" class="btn-secondary">Clear</button>
+          </div>
+          <div id="encryptResult" class="result hidden">
+            <p class="result-title">Encrypted URL &amp; QR</p>
+            <div class="copy-group">
+              <textarea id="encryptedUrlOutput" readonly rows="3"></textarea>
+              <button id="copyUrlBtn" class="btn-icon">Copy</button>
+            </div>
+            <div id="qrCodeContainer" style="margin-top: 1rem; text-align: center;"></div>
+            <p class="hint">Bookmark or print QR. Both contain the same encrypted data.</p>
+          </div>
+          <div id="weakPassConfirm" class="confirm-overlay hidden">
+            <p>Password is weak. Encrypt anyway?</p>
+            <button id="weakPassYes" class="btn-primary">Yes</button>
+            <button id="weakPassNo" class="btn-secondary">No</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Decrypt -->
+      <div class="panel" id="panel-decrypt">
+        <div class="card">
+          <div class="field">
+            <label for="encryptedUrl">Encrypted URL</label>
+            <input type="text" id="encryptedUrl" placeholder="Paste the bookmarked URL or scan QR">
+          </div>
+          <div class="field">
+            <label for="qrScanInput">Scan QR Code</label>
+            <input type="file" id="qrScanInput" accept="image/*">
+          </div>
+          <div class="field">
+            <label for="decPassword">Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="decPassword" placeholder="Enter password">
+              <button type="button" class="toggle-vis" data-target="decPassword">Show</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="decKeyfileInput">Keyfile (if used)</label>
+            <input type="file" id="decKeyfileInput">
+          </div>
+          <div class="action-row">
+            <button id="decryptBtn" class="btn-primary">Decrypt Seed</button>
+            <button id="clearDecryptBtn" class="btn-secondary">Clear</button>
+          </div>
+          <div id="confirmReveal" class="confirm-overlay hidden">
+            <p>Seed phrase will be shown. Make sure no one is watching.</p>
+            <button id="revealYes" class="btn-primary">Reveal</button>
+            <button id="revealNo" class="btn-secondary">Cancel</button>
+          </div>
+          <div id="decryptResult" class="result hidden">
+            <p class="result-title">Decrypted Seed</p>
+            <div class="copy-group">
+              <textarea id="decryptedSeedOutput" readonly rows="4"></textarea>
+              <button id="copySeedBtn" class="btn-icon">Copy</button>
+            </div>
+            <p class="hint">Auto-clears after 60 seconds. Close this tab when done.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Manage Seeds -->
+      <div class="panel" id="panel-manage">
+        <div class="card">
+          <h3>Multi-Seed Vault</h3>
+          <p class="hint">Store multiple seeds encrypted with a master password + keyfile.</p>
+          <div class="field">
+            <label for="vaultLabel">Seed Label</label>
+            <input type="text" id="vaultLabel" placeholder="e.g. Cold Wallet, Hot Wallet">
+          </div>
+          <div class="field">
+            <label for="vaultSeed">Seed Phrase</label>
+            <textarea id="vaultSeed" placeholder="Enter seed phrase" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="vaultMasterPass">Master Password</label>
+            <input type="password" id="vaultMasterPass" placeholder="Master password for all seeds">
+          </div>
+          <div class="field">
+            <label for="vaultKeyfile">Keyfile (optional)</label>
+            <input type="file" id="vaultKeyfile">
+          </div>
+          <div class="action-row">
+            <button id="addSeedBtn" class="btn-primary">Add Seed</button>
+            <button id="exportVaultBtn" class="btn-secondary">Export Vault</button>
+            <button id="importVaultBtn" class="btn-secondary">Import Vault</button>
+            <input type="file" id="importVaultFile" accept=".json" style="display:none;">
+          </div>
+          <div id="seedList" class="seed-list"></div>
+          <div id="multiSeedResult" class="result hidden">
+            <p class="result-title">Decrypted Seed</p>
+            <div class="copy-group">
+              <textarea id="multiSeedOutput" readonly rows="3"></textarea>
+              <button id="copyMultiSeedBtn" class="btn-icon">Copy</button>
+            </div>
+            <p class="hint">Auto-clears after 30 seconds.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit Panel Modal -->
+    <div id="auditPanel" class="modal hidden">
+      <div class="modal-content">
+        <h3>Integrity Audit</h3>
+        <p>Verify that the code has not been tampered with.</p>
+        <div id="auditResults"></div>
+        <button id="closeAudit" class="btn-secondary">Close</button>
+      </div>
+    </div>
+
+    <footer>
+      <span>Client-side only · Argon2id · Keyfile 2FA · Multi-Seed · <a href="#" id="footerAuditLink">Audit</a> · Works offline</span>
+    </footer>
+  </div>
+
+  <script src="lib/argon2-browser.min.js"></script>
+  <script src="lib/qrcode.min.js"></script>
+  <script src="lib/jsQR.js"></script>
+  <script src="js/encrypt.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
