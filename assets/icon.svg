@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f7931a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e07d12;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="88" fill="#1a1a1a" stroke="url(#grad)" stroke-width="6"/>
+  <!-- Vault door shape -->
+  <rect x="56" y="56" width="80" height="80" rx="12" fill="none" stroke="url(#grad)" stroke-width="6"/>
+  <!-- Vault handle -->
+  <circle cx="96" cy="96" r="16" fill="none" stroke="url(#grad)" stroke-width="6"/>
+  <circle cx="96" cy="96" r="6" fill="url(#grad)"/>
+  <!-- Vault lock lines -->
+  <line x1="96" y1="40" x2="96" y2="56" stroke="url(#grad)" stroke-width="5" stroke-linecap="round"/>
+  <line x1="40" y1="96" x2="56" y2="96" stroke="url(#grad)" stroke-width="5" stroke-linecap="round"/>
+  <line x1="136" y1="96" x2="152" y2="96" stroke="url(#grad)" stroke-width="5" stroke-linecap="round"/>
+  <line x1="96" y1="136" x2="96" y2="152" stroke="url(#grad)" stroke-width="5" stroke-linecap="round"/>
+</svg>
